@@ -1,6 +1,22 @@
 const { pool } = require("../config/db");
 
+let ensureProductColumnsPromise = null;
+
+function ensureProductColumns() {
+  if (!ensureProductColumnsPromise) {
+    ensureProductColumnsPromise = pool
+      .query("alter table products add column if not exists specifications text")
+      .catch((error) => {
+        ensureProductColumnsPromise = null;
+        throw error;
+      });
+  }
+
+  return ensureProductColumnsPromise;
+}
+
 async function list(query) {
+  await ensureProductColumns();
   const { search, category, minPrice, maxPrice, sort } = query;
 
   const params = [];
@@ -8,7 +24,9 @@ async function list(query) {
 
   if (search) {
     params.push(`%${search}%`);
-    where.push(`(p.title ilike $${params.length} or p.description ilike $${params.length})`);
+    where.push(
+      `(p.title ilike $${params.length} or p.description ilike $${params.length} or p.specifications ilike $${params.length})`
+    );
   }
 
   if (category) {
@@ -38,6 +56,7 @@ async function list(query) {
       p.id,
       p.title,
       p.description,
+      p.specifications,
       p.price,
       p.stock,
       p.image,
@@ -55,6 +74,7 @@ async function list(query) {
 }
 
 async function getById(id) {
+  await ensureProductColumns();
   const sql = `
     select
       p.*,

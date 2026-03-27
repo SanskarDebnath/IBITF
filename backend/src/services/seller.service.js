@@ -1,5 +1,7 @@
 const { pool } = require("../config/db");
 
+let ensureProductColumnsPromise = null;
+
 function toNumber(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -36,9 +38,28 @@ function formatMonthLabel(date) {
   return `${month} ${String(date.getUTCFullYear()).slice(-2)}`;
 }
 
+function ensureProductColumns() {
+  if (!ensureProductColumnsPromise) {
+    ensureProductColumnsPromise = pool
+      .query("alter table products add column if not exists specifications text")
+      .catch((error) => {
+        ensureProductColumnsPromise = null;
+        throw error;
+      });
+  }
+
+  return ensureProductColumnsPromise;
+}
+
 async function getSellerByUserId(userId) {
   const res = await pool.query("select * from sellers where user_id = $1", [userId]);
   return res.rows[0] || null;
+}
+
+function normalizeSpecifications(value) {
+  if (value === undefined || value === null) return null;
+  const text = String(value).trim();
+  return text || null;
 }
 
 function mapSellerSettingsRow(row) {
@@ -83,6 +104,7 @@ async function onboard(userId, payload) {
 }
 
 async function listProducts(userId) {
+  await ensureProductColumns();
   const seller = await getSellerByUserId(userId);
   if (!seller) {
     const error = new Error("Seller profile not found");
@@ -92,7 +114,7 @@ async function listProducts(userId) {
 
   const { rows } = await pool.query(
     `
-    select p.id, p.title, p.description, p.price, p.stock, p.image, p.status, c.name as category_name
+    select p.id, p.title, p.description, p.specifications, p.price, p.stock, p.image, p.status, c.name as category_name
     from products p
     left join categories c on c.id = p.category_id
     where p.seller_id = $1
@@ -574,6 +596,7 @@ async function getKpis(userId) {
 }
 
 async function addProduct(userId, payload) {
+  await ensureProductColumns();
   const seller = await getSellerByUserId(userId);
   if (!seller) {
     const error = new Error("Seller profile not found");
@@ -583,15 +606,16 @@ async function addProduct(userId, payload) {
 
   const insertRes = await pool.query(
     `
-    insert into products (seller_id, category_id, title, description, price, stock, image, status)
-    values ($1, $2, $3, $4, $5, $6, $7, $8)
-    returning id, title, description, price, stock, image, status
+    insert into products (seller_id, category_id, title, description, specifications, price, stock, image, status)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    returning id, title, description, specifications, price, stock, image, status
     `,
     [
       seller.id,
       payload.categoryId || null,
       payload.title,
       payload.description || null,
+      normalizeSpecifications(payload.specifications),
       payload.price,
       payload.stock || 0,
       payload.image || null,
@@ -637,6 +661,7 @@ async function addCategory(userId, payload) {
 }
 
 async function updateProduct(userId, productId, payload) {
+  await ensureProductColumns();
   const seller = await getSellerByUserId(userId);
   if (!seller) {
     const error = new Error("Seller profile not found");
@@ -649,17 +674,19 @@ async function updateProduct(userId, productId, payload) {
     update products
     set title = $1,
         description = $2,
-        price = $3,
-        stock = $4,
-        image = $5,
-        status = $6,
-        category_id = $7
-    where id = $8 and seller_id = $9
-    returning id, title, description, price, stock, image, status
+        specifications = $3,
+        price = $4,
+        stock = $5,
+        image = $6,
+        status = $7,
+        category_id = $8
+    where id = $9 and seller_id = $10
+    returning id, title, description, specifications, price, stock, image, status
     `,
     [
       payload.title,
       payload.description || null,
+      normalizeSpecifications(payload.specifications),
       payload.price,
       payload.stock || 0,
       payload.image || null,

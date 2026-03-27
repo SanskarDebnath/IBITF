@@ -1,7 +1,9 @@
 const router = require("express").Router();
+const { auth } = require("../middlewares/auth");
+const { getMe, updateMe } = require("../controllers/users.controller");
 
-router.get("/me", (req, res) => {
-  res.status(501).json({ message: "Not implemented" });
-});
+router.use(auth);
+router.get("/me", getMe);
+router.patch("/me", updateMe);
 
 module.exports = router;

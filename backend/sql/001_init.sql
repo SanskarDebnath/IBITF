@@ -100,6 +100,13 @@ create table if not exists order_items (
   line_total numeric(12,2) not null
 );
 
+alter table if exists users
+  add column if not exists gender text,
+  add column if not exists mobile text;
+
+alter table if exists products
+  add column if not exists specifications text;
+
 insert into categories (name)
 values
   ('Home & Living'),

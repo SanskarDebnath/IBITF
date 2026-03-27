@@ -17,6 +17,7 @@ async function checkout(userId, payload) {
       from cart_items ci
       join products p on p.id = ci.product_id
       where ci.user_id = $1
+      for update of p
       `,
       [userId]
     );
@@ -28,6 +29,17 @@ async function checkout(userId, payload) {
     }
 
     const items = cartRes.rows;
+
+    for (const item of items) {
+      const stock = Number(item.stock || 0);
+      const qty = Number(item.qty || 0);
+      if (qty > stock) {
+        const error = new Error(`Insufficient stock for "${item.title}"`);
+        error.status = 400;
+        throw error;
+      }
+    }
+
     const total = items.reduce((sum, item) => sum + Number(item.price) * Number(item.qty), 0);
 
     const orderRes = await client.query(
@@ -56,6 +68,15 @@ async function checkout(userId, payload) {
         item.qty,
         lineTotal
       ]);
+
+      await client.query(
+        `
+        update products
+        set stock = stock - $1
+        where id = $2
+        `,
+        [Number(item.qty), item.product_id]
+      );
     }
 
     await client.query("delete from cart_items where user_id = $1", [userId]);
