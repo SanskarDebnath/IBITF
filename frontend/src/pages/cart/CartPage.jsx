@@ -7,6 +7,8 @@ import "./CartPage.css";
 export default function CartPage() {
   const { items, removeFromCart, total, clearCart } = useCart();
   const [isClearing, setIsClearing] = useState(false);
+  const taxRate = 0.18;
+  const totalWithTax = total * (1 + taxRate);
 
   const handleClearCart = async () => {
     setIsClearing(true);
@@ -53,14 +55,26 @@ export default function CartPage() {
             {items.map((item) => (
               <div key={item.id} className="cart-item">
                 <div className="cart-item-image">
-                  <div className="image-placeholder">
-                    {item.name.charAt(0)}
-                  </div>
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="cart-item-thumbnail" />
+                  ) : (
+                    <div className="image-placeholder">
+                      {item.name.charAt(0)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="cart-item-details">
                   <div className="cart-item-header">
-                    <h3 className="cart-item-name">{item.name}</h3>
+                    <div className="cart-item-title-group">
+                      <Link to={`/products/${item.productId}`} className="cart-item-name">
+                        {item.name}
+                      </Link>
+                      <div className="cart-item-meta">
+                        <span>Product ID: {item.productId}</span>
+                        {item.status ? <span className="cart-item-status">{item.status}</span> : null}
+                      </div>
+                    </div>
                     <button
                       className="remove-item-btn"
                       onClick={() => removeFromCart(item.id)}
@@ -71,15 +85,19 @@ export default function CartPage() {
                   </div>
 
                   <div className="cart-item-info">
-                    <div className="cart-item-price">₹{item.price}</div>
+                    <div className="cart-item-price">INR {(item.price * (1 + taxRate)).toFixed(2)}</div>
                     <div className="cart-item-quantity">
                       <span className="quantity-label">Quantity:</span>
                       <span className="quantity-value">{item.qty}</span>
                     </div>
+                    {item.stock > 0 ? (
+                      <div className="cart-item-stock">Stock: {item.stock}</div>
+                    ) : null}
                   </div>
 
                   <div className="cart-item-subtotal">
-                    Subtotal: <span className="subtotal-amount">₹{item.price * item.qty}</span>
+                    Subtotal (incl. tax):{" "}
+                    <span className="subtotal-amount">INR {(item.price * (1 + taxRate) * item.qty).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -93,8 +111,8 @@ export default function CartPage() {
 
             <div className="summary-details">
               <div className="summary-row">
-                <span>Subtotal</span>
-                <span>₹{total}</span>
+                <span>Subtotal (incl. tax)</span>
+                <span>INR {totalWithTax.toFixed(2)}</span>
               </div>
               <div className="summary-row">
                 <span>Shipping</span>
@@ -102,12 +120,12 @@ export default function CartPage() {
               </div>
               <div className="summary-row">
                 <span>Tax (18%)</span>
-                <span>₹{(total * 0.18).toFixed(2)}</span>
+                <span>Included</span>
               </div>
               <div className="summary-divider" />
               <div className="summary-row total-row">
                 <span><strong>Total</strong></span>
-                <span className="total-amount">₹{(total * 1.18).toFixed(2)}</span>
+                <span className="total-amount">INR {totalWithTax.toFixed(2)}</span>
               </div>
             </div>
 
@@ -128,3 +146,4 @@ export default function CartPage() {
     </div>
   );
 }
+

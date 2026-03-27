@@ -3,6 +3,124 @@
     overflow-x: hidden;
 }
 
+.home-commerce-disclaimer {
+    max-width: 1200px;
+    margin: -12px auto 22px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.web3-signal-section {
+    padding: 0 20px;
+    margin-bottom: 48px;
+}
+
+.web3-signal-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 24px;
+    padding: 28px;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.18), transparent 26%),
+        linear-gradient(135deg, #081a2f 0%, #0d2742 45%, #12213c 100%);
+    color: #e2f6ff;
+    box-shadow: 0 24px 60px rgba(8, 26, 47, 0.24);
+}
+
+.web3-signal-kicker {
+    display: inline-flex;
+    margin-bottom: 14px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #67e8f9;
+}
+
+.web3-signal-copy h2 {
+    margin: 0;
+    font-size: 42px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.web3-signal-copy p {
+    margin: 16px 0 0;
+    color: rgba(224, 242, 254, 0.78);
+    font-size: 18px;
+    line-height: 1.7;
+    max-width: 56ch;
+}
+
+.web3-signal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.web3-contract-inline {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(125, 211, 252, 0.18);
+}
+
+.web3-contract-inline strong {
+    font-size: 28px;
+}
+
+.web3-contract-inline span {
+    color: rgba(224, 242, 254, 0.74);
+}
+
+.web3-signal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.web3-signal-card {
+    padding: 20px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(125, 211, 252, 0.12);
+    backdrop-filter: blur(14px);
+}
+
+.web3-signal-card__icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(103, 232, 249, 0.16);
+    color: #67e8f9;
+}
+
+.web3-signal-card h3 {
+    margin: 14px 0 8px;
+    color: #f8fafc;
+}
+
+.web3-signal-card p {
+    margin: 0;
+    color: rgba(224, 242, 254, 0.74);
+    line-height: 1.6;
+}
+
 /* Hero Carousel Styles */
 .hero__media {
     position: relative;
@@ -804,6 +922,10 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
+    .web3-signal-shell {
+        grid-template-columns: 1fr;
+    }
+
     .home-intro {
         grid-template-columns: 1fr;
         gap: 50px;
@@ -843,6 +965,14 @@
 }
 
 @media (max-width: 768px) {
+    .web3-signal-copy h2 {
+        font-size: 32px;
+    }
+
+    .web3-signal-grid {
+        grid-template-columns: 1fr;
+    }
+
     .home-intro {
         padding: 0 20px;
         margin: 60px auto;
@@ -943,6 +1073,11 @@
 }
 
 @media (max-width: 480px) {
+    .web3-signal-shell {
+        padding: 20px;
+        border-radius: 22px;
+    }
+
     .features-container {
         gap: 20px;
     }

@@ -12,6 +12,7 @@ import ContactPage from "../../pages/static/ContactPage";
 import FooterContentPage from "../../pages/static/FooterContentPage";
 import NotFoundPage from "../../pages/static/NotFoundPage";
 import { footerPageRoutes } from "../../pages/static/footerPageContent";
+import Web3HubPage from "../../pages/web3/Web3HubPage";
 
 // Auth
 import LoginPage from "../../pages/auth/LoginPage";
@@ -51,6 +52,7 @@ export default function AppRoutes() {
         <Route path="/products/:id" element={<ProductDetailsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/web3" element={<Web3HubPage />} />
         {footerPageRoutes.map((route) => (
           <Route
             key={route.path}

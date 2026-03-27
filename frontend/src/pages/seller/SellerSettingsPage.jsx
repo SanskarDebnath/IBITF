@@ -149,6 +149,39 @@ export default function SellerSettingsPage() {
     }
   ];
 
+  const mappingRows = [
+    {
+      icon: <Mail size={18} />,
+      field: <FieldCode>users.email</FieldCode>,
+      description: "Login email. Read-only here.",
+      value: settings.user.email || "-"
+    },
+    {
+      icon: <UserRound size={18} />,
+      field: <FieldCode>users.name</FieldCode>,
+      description: "Seller account display name.",
+      value: settings.user.name || "-"
+    },
+    {
+      icon: <Store size={18} />,
+      field: <FieldCode>sellers.shop_name</FieldCode>,
+      description: "Public-facing shop name.",
+      value: settings.seller.shopName || "-"
+    },
+    {
+      icon: <Phone size={18} />,
+      field: <FieldCode>sellers.phone</FieldCode>,
+      description: "Primary seller contact number.",
+      value: settings.seller.phone || "-"
+    },
+    {
+      icon: <MapPin size={18} />,
+      field: <FieldCode>sellers.address</FieldCode>,
+      description: "Business or pickup address.",
+      value: settings.seller.address || "-"
+    }
+  ];
+
   if (loading) {
     return (
       <div className="seller-panel seller-settings-state">
@@ -332,41 +365,16 @@ export default function SellerSettingsPage() {
             </div>
 
             <div className="seller-settings-mapping">
-              <div className="seller-settings-mapping__item">
-                <Mail size={18} />
-                <div>
-                  <strong><FieldCode>users.email</FieldCode></strong>
-                  <span>Login email. Read-only here.</span>
+              {mappingRows.map((row) => (
+                <div key={row.description} className="seller-settings-mapping__item">
+                  {row.icon}
+                  <div>
+                    <strong>{row.field}</strong>
+                    <span>{row.description}</span>
+                    <span><strong>Current value:</strong> {row.value}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="seller-settings-mapping__item">
-                <UserRound size={18} />
-                <div>
-                  <strong><FieldCode>users.name</FieldCode></strong>
-                  <span>Seller account display name.</span>
-                </div>
-              </div>
-              <div className="seller-settings-mapping__item">
-                <Store size={18} />
-                <div>
-                  <strong><FieldCode>sellers.shop_name</FieldCode></strong>
-                  <span>Public-facing shop name.</span>
-                </div>
-              </div>
-              <div className="seller-settings-mapping__item">
-                <Phone size={18} />
-                <div>
-                  <strong><FieldCode>sellers.phone</FieldCode></strong>
-                  <span>Primary seller contact number.</span>
-                </div>
-              </div>
-              <div className="seller-settings-mapping__item">
-                <MapPin size={18} />
-                <div>
-                  <strong><FieldCode>sellers.address</FieldCode></strong>
-                  <span>Business or pickup address.</span>
-                </div>
-              </div>
+              ))}
             </div>
           </article>
         </div>

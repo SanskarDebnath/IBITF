@@ -1,0 +1,437 @@
+.web3-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.web3-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
+  gap: 20px;
+  padding: 28px;
+  border-radius: 32px;
+  color: #ecfeff;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.24), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 30%),
+    linear-gradient(135deg, #031525 0%, #07273f 46%, #0d1730 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 28px 70px rgba(3, 15, 30, 0.32);
+}
+
+.web3-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.web3-hero h1,
+.web3-section-heading h2 {
+  margin: 0;
+  line-height: 1.08;
+}
+
+.web3-hero h1 {
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 4vw, 4.4rem);
+  letter-spacing: -0.04em;
+}
+
+.web3-hero p {
+  max-width: 62ch;
+  margin: 18px 0 0;
+  color: rgba(224, 242, 254, 0.82);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.web3-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.web3-primary-button,
+.web3-secondary-button,
+.web3-inline-button,
+.web3-inline-link,
+.web3-transaction-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.web3-primary-button,
+.web3-secondary-button,
+.web3-inline-button {
+  border: 1px solid rgba(186, 230, 253, 0.18);
+  padding: 14px 18px;
+  font-size: 0.95rem;
+}
+
+.web3-primary-button {
+  color: #00131b;
+  background: linear-gradient(135deg, #67e8f9 0%, #a5f3fc 100%);
+}
+
+.web3-secondary-button,
+.web3-inline-button {
+  color: #e0f2fe;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.web3-primary-button:hover,
+.web3-secondary-button:hover,
+.web3-inline-button:hover,
+.web3-inline-link:hover,
+.web3-transaction-card__link:hover {
+  transform: translateY(-1px);
+}
+
+.web3-primary-button:disabled,
+.web3-secondary-button:disabled,
+.web3-inline-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.web3-note {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #dbeafe;
+  background: rgba(8, 47, 73, 0.62);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+}
+
+.web3-session-card,
+.web3-feature-card,
+.web3-contract-card,
+.web3-transaction-card,
+.web3-empty-state {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.web3-session-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(10, 24, 44, 0.76), rgba(7, 15, 28, 0.92));
+}
+
+.web3-session-card__label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.86);
+}
+
+.web3-session-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.web3-session-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: rgba(224, 242, 254, 0.72);
+  font-size: 0.95rem;
+}
+
+.web3-session-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.web3-session-card__stats div {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(14, 116, 144, 0.14);
+}
+
+.web3-session-card__stats strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.web3-session-card__stats span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(224, 242, 254, 0.74);
+  font-size: 0.88rem;
+}
+
+.web3-feature-strip,
+.web3-contract-grid,
+.web3-transaction-list {
+  display: grid;
+  gap: 18px;
+}
+
+.web3-feature-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.web3-feature-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.web3-feature-card__icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: #0369a1;
+  background: linear-gradient(135deg, rgba(103, 232, 249, 0.16), rgba(59, 130, 246, 0.14));
+}
+
+.web3-feature-card h2,
+.web3-contract-card h3 {
+  margin: 16px 0 8px;
+  color: #0f172a;
+}
+
+.web3-feature-card p,
+.web3-contract-card p,
+.web3-empty-state p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.web3-contracts-section,
+.web3-activity-section {
+  padding: 26px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
+  border: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+.web3-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.web3-section-heading h2 {
+  font-size: clamp(1.7rem, 2vw, 2.4rem);
+  color: #0f172a;
+}
+
+.web3-inline-link {
+  padding: 12px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.web3-contract-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.web3-contract-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98));
+}
+
+.web3-contract-card__topline,
+.web3-transaction-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.web3-contract-card__topline {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.web3-contract-card__coverage,
+.web3-contract-card__address {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  color: #334155;
+}
+
+.web3-contract-card__address {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.accent-cyan {
+  box-shadow: inset 0 3px 0 #22d3ee, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.accent-amber {
+  box-shadow: inset 0 3px 0 #f59e0b, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.accent-emerald {
+  box-shadow: inset 0 3px 0 #10b981, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.accent-violet {
+  box-shadow: inset 0 3px 0 #8b5cf6, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.accent-rose {
+  box-shadow: inset 0 3px 0 #f43f5e, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.accent-sky {
+  box-shadow: inset 0 3px 0 #0ea5e9, 0 18px 44px rgba(2, 8, 23, 0.08);
+}
+
+.web3-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.web3-transaction-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.web3-transaction-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  background: #ffffff;
+}
+
+.web3-transaction-card__direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.web3-transaction-card__direction.outbound {
+  color: #9f1239;
+  background: #ffe4e6;
+}
+
+.web3-transaction-card__direction.inbound {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+.web3-transaction-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.web3-transaction-card__row span {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.web3-transaction-card__row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+.web3-transaction-card__link {
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.spin {
+  animation: web3-spin 1s linear infinite;
+}
+
+@keyframes web3-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1180px) {
+  .web3-hero,
+  .web3-feature-strip,
+  .web3-contract-grid,
+  .web3-transaction-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .web3-page {
+    gap: 18px;
+  }
+
+  .web3-hero,
+  .web3-contracts-section,
+  .web3-activity-section {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .web3-section-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .web3-hero__actions {
+    flex-direction: column;
+  }
+
+  .web3-primary-button,
+  .web3-secondary-button,
+  .web3-inline-button,
+  .web3-inline-link,
+  .web3-transaction-card__link {
+    width: 100%;
+  }
+}

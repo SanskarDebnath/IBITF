@@ -15,6 +15,7 @@ export default function AddProductPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    specifications: "",
     price: "",
     stock: "",
     categoryId: "",
@@ -106,9 +107,21 @@ export default function AddProductPage() {
           Description
           <textarea name="description" value={formData.description} onChange={handleChange} />
         </label>
+        <label>
+          Product Details / Specifications
+          <textarea
+            name="specifications"
+            value={formData.specifications}
+            onChange={handleChange}
+            placeholder={"Material: Bamboo\nDimensions: 12 x 8 x 6 in\nWeight: 450 g"}
+          />
+          <span className="seller-field-hint">
+            Add one specification per line as <code>Key: Value</code>.
+          </span>
+        </label>
         <div className="seller-form-grid">
           <label>
-            Price (₹)
+            Price (INR)
             <input name="price" type="number" value={formData.price} onChange={handleChange} required />
           </label>
           <label>

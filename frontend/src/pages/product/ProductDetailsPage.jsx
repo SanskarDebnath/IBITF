@@ -4,6 +4,7 @@ import { useCart } from "../../app/providers/CartProvider";
 import { useToast } from "../../app/providers/ToastProvider";
 import { useWishlist } from "../../app/providers/WishlistProvider";
 import { useAuth } from "../../app/providers/AuthProvider";
+import { useWeb3 } from "../../app/providers/useWeb3";
 import {
   ShoppingCart,
   Heart,
@@ -21,14 +22,31 @@ import {
   Check,
   Plus,
   Minus,
-  ArrowLeft
+  ArrowLeft,
+  Blocks,
+  Wallet,
+  ExternalLink
 } from "lucide-react";
+import { HIDE_PRODUCT_PRICES, NON_COMMERCIAL_DISCLAIMER } from "../../config/commerce";
+import { getCoreContracts, getExplorerAddressUrl, getProductWeb3Profile } from "../../config/web3";
 import "./ProductDetailsPage.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const fallbackImage = "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 const RECENTLY_VIEWED_KEY = "recentlyViewedProducts";
+const DEFAULT_SPECIFICATIONS = {
+  material: "Not specified",
+  color: "Not specified",
+  dimensions: "Not specified",
+  weight: "Not specified",
+  careInstructions: "Not specified"
+};
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0
+});
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -48,6 +66,45 @@ const buildImageUrl = (imagePath) => {
   return `${API_ORIGIN}${normalized}`;
 };
 
+const parseSpecifications = (rawSpecifications) => {
+  if (!rawSpecifications) return DEFAULT_SPECIFICATIONS;
+
+  if (typeof rawSpecifications === "object" && !Array.isArray(rawSpecifications)) {
+    return Object.keys(rawSpecifications).length ? rawSpecifications : DEFAULT_SPECIFICATIONS;
+  }
+
+  const text = String(rawSpecifications || "").trim();
+  if (!text) return DEFAULT_SPECIFICATIONS;
+
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return Object.keys(parsed).length ? parsed : DEFAULT_SPECIFICATIONS;
+    }
+  } catch {
+    // Fall back to line-based parsing.
+  }
+
+  const entries = {};
+  text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .forEach((line, index) => {
+      const [rawKey, ...rawValueParts] = line.split(":");
+      const value = rawValueParts.join(":").trim();
+      if (!value) {
+        entries[`Detail ${index + 1}`] = rawKey.trim();
+        return;
+      }
+      entries[rawKey.trim()] = value;
+    });
+
+  return Object.keys(entries).length ? entries : DEFAULT_SPECIFICATIONS;
+};
+
+const formatPrice = (value) => currencyFormatter.format(Number(value || 0));
+
 const normalizeProduct = (apiProduct) => {
   const price = toNumber(apiProduct?.price, 0);
   const stock = toNumber(apiProduct?.stock, 0);
@@ -65,7 +122,6 @@ const normalizeProduct = (apiProduct) => {
     originalPrice: null,
     discount: null,
     description: apiProduct?.description || "No description available.",
-    detailedDescription: apiProduct?.description || "No description available.",
     features: [],
     images: [imageUrl],
     rating: 4.0,
@@ -84,73 +140,67 @@ const normalizeProduct = (apiProduct) => {
       address: sellerAddress || "Address not provided by the seller.",
       status: sellerStatus || "active"
     },
-    specifications: {
-      material: "Not specified",
-      color: "Not specified",
-      dimensions: "Not specified",
-      weight: "Not specified",
-      careInstructions: "Not specified"
-    }
+    specifications: parseSpecifications(apiProduct?.specifications)
   };
 };
-const reviews = [
-  {
-    id: 1,
-    user: "Priya Sharma",
-    rating: 5,
-    date: "2 weeks ago",
-    comment: "Beautiful basket! The quality is exceptional and it looks stunning in my living room. Perfect for storing blankets.",
-    verified: true
-  },
-  {
-    id: 2,
-    user: "Raj Mehta",
-    rating: 4,
-    date: "1 month ago",
-    comment: "Good product, sturdy construction. The size is perfect for what I needed. Delivery was prompt.",
-    verified: true
-  },
-  {
-    id: 3,
-    user: "Anjali Patel",
-    rating: 5,
-    date: "3 days ago",
-    comment: "Love the natural look! It's exactly as described and adds a nice touch to my home decor.",
-    verified: false
-  },
-  {
-    id: 4,
-    user: "Kiran Das",
-    rating: 4,
-    date: "1 week ago",
-    comment: "Nice craftsmanship and smooth finish. Packaging was secure and arrived on time.",
-    verified: true
-  },
-  {
-    id: 5,
-    user: "Meera Nair",
-    rating: 5,
-    date: "5 days ago",
-    comment: "Looks premium and fits perfectly in my entryway. Highly recommended!",
-    verified: true
-  },
-  {
-    id: 6,
-    user: "Amit Roy",
-    rating: 4,
-    date: "3 weeks ago",
-    comment: "Great value for money. The color matches the photos.",
-    verified: false
-  },
-  {
-    id: 7,
-    user: "Sneha Kapoor",
-    rating: 5,
-    date: "2 days ago",
-    comment: "Absolutely love it. Will order again for gifting.",
-    verified: true
-  }
-];
+// const reviews = [
+//   {
+//     id: 1,
+//     user: "Priya Sharma",
+//     rating: 5,
+//     date: "2 weeks ago",
+//     comment: "Beautiful basket! The quality is exceptional and it looks stunning in my living room. Perfect for storing blankets.",
+//     verified: true
+//   },
+//   {
+//     id: 2,
+//     user: "Raj Mehta",
+//     rating: 4,
+//     date: "1 month ago",
+//     comment: "Good product, sturdy construction. The size is perfect for what I needed. Delivery was prompt.",
+//     verified: true
+//   },
+//   {
+//     id: 3,
+//     user: "Anjali Patel",
+//     rating: 5,
+//     date: "3 days ago",
+//     comment: "Love the natural look! It's exactly as described and adds a nice touch to my home decor.",
+//     verified: false
+//   },
+//   {
+//     id: 4,
+//     user: "Kiran Das",
+//     rating: 4,
+//     date: "1 week ago",
+//     comment: "Nice craftsmanship and smooth finish. Packaging was secure and arrived on time.",
+//     verified: true
+//   },
+//   {
+//     id: 5,
+//     user: "Meera Nair",
+//     rating: 5,
+//     date: "5 days ago",
+//     comment: "Looks premium and fits perfectly in my entryway. Highly recommended!",
+//     verified: true
+//   },
+//   {
+//     id: 6,
+//     user: "Amit Roy",
+//     rating: 4,
+//     date: "3 weeks ago",
+//     comment: "Great value for money. The color matches the photos.",
+//     verified: false
+//   },
+//   {
+//     id: 7,
+//     user: "Sneha Kapoor",
+//     rating: 5,
+//     date: "2 days ago",
+//     comment: "Absolutely love it. Will order again for gifting.",
+//     verified: true
+//   }
+// ];
 
 const relatedProducts = [
   {
@@ -190,6 +240,7 @@ export default function ProductDetailsPage() {
   const { showToast } = useToast();
   const { items: wishlistItems, addToWishlist, removeFromWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const { account: connectedAccount, chainConfig, chainId, isConnected: isWalletConnected } = useWeb3();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -200,10 +251,13 @@ export default function ProductDetailsPage() {
   const [mainImageError, setMainImageError] = useState(false);
   const [thumbnailStatus, setThumbnailStatus] = useState({});
   const [relatedStatus, setRelatedStatus] = useState({});
-  const [reviewsPerView, setReviewsPerView] = useState(3);
-  const [reviewIndex, setReviewIndex] = useState(0);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const currentImage = product?.images?.[selectedImage] || fallbackImage;
+  const web3Profile = product ? getProductWeb3Profile(product) : null;
+  const productContracts = web3Profile
+    ? getCoreContracts().filter((contract) => web3Profile.contractKeys.includes(contract.key))
+    : [];
+  const walletExplorerUrl = getExplorerAddressUrl(chainId, connectedAccount);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -352,29 +406,29 @@ export default function ProductDetailsPage() {
     }
   }, [product]);
 
-  useEffect(() => {
-    const updateReviewsPerView = () => {
-      const width = window.innerWidth;
-      if (width <= 640) {
-        setReviewsPerView(1);
-      } else if (width <= 1024) {
-        setReviewsPerView(2);
-      } else {
-        setReviewsPerView(3);
-      }
-    };
+  // useEffect(() => {
+  //   const updateReviewsPerView = () => {
+  //     const width = window.innerWidth;
+  //     if (width <= 640) {
+  //       setReviewsPerView(1);
+  //     } else if (width <= 1024) {
+  //       setReviewsPerView(2);
+  //     } else {
+  //       setReviewsPerView(3);
+  //     }
+  //   };
 
-    updateReviewsPerView();
-    window.addEventListener("resize", updateReviewsPerView);
-    return () => window.removeEventListener("resize", updateReviewsPerView);
-  }, []);
+  //   updateReviewsPerView();
+  //   window.addEventListener("resize", updateReviewsPerView);
+  //   return () => window.removeEventListener("resize", updateReviewsPerView);
+  // }, []);
 
-  useEffect(() => {
-    const maxIndex = Math.max(0, reviews.length - reviewsPerView);
-    if (reviewIndex > maxIndex) {
-      setReviewIndex(maxIndex);
-    }
-  }, [reviewsPerView, reviewIndex]);
+  // useEffect(() => {
+  //   const maxIndex = Math.max(0, reviews.length - reviewsPerView);
+  //   if (reviewIndex > maxIndex) {
+  //     setReviewIndex(maxIndex);
+  //   }
+  // }, [reviewsPerView, reviewIndex]);
 
   const handleThumbnailLoad = (index) => {
     setThumbnailStatus((prev) => ({ ...prev, [index]: "loaded" }));
@@ -431,7 +485,7 @@ export default function ProductDetailsPage() {
         text: `Check out ${product.name} on BambooCraft!`,
         url: window.location.href,
       });
-    } catch (err) {
+    } catch {
       navigator.clipboard.writeText(window.location.href);
       showToast("Link copied to clipboard!", "info");
     }
@@ -448,9 +502,6 @@ export default function ProductDetailsPage() {
     setSelectedImage(prev => (prev - 1 + product.images.length) % product.images.length);
   };
 
-  const reviewsMaxIndex = Math.max(0, reviews.length - reviewsPerView);
-  const nextReviews = () => setReviewIndex((prev) => Math.min(prev + reviewsPerView, reviewsMaxIndex));
-  const prevReviews = () => setReviewIndex((prev) => Math.max(prev - reviewsPerView, 0));
   const recentProducts = recentlyViewed.filter((item) => String(item.id) !== String(product?.id)).slice(0, 4);
 
   if (loading) {
@@ -498,6 +549,7 @@ export default function ProductDetailsPage() {
         <span> / </span>
         <span className="current">{product.name}</span>
       </nav>
+      <div className="commerce-disclaimer">{NON_COMMERCIAL_DISCLAIMER}</div>
 
       {/* Main Product Section */}
       <div className="product-details-main">
@@ -631,11 +683,17 @@ export default function ProductDetailsPage() {
 
           <div className="product-price-section">
             <div className="price-display">
-              <span className="current-price">₹{product.price}</span>
-              {product.originalPrice && (
+              {HIDE_PRODUCT_PRICES ? (
+                <span className="price-unavailable">Price will be shown after commercial launch.</span>
+              ) : (
                 <>
-                  <span className="original-price">₹{product.originalPrice}</span>
-                  <span className="discount-percent">Save {product.discount}%</span>
+                  <span className="current-price">{formatPrice(product.price)}</span>
+                  {product.originalPrice && (
+                    <>
+                      <span className="original-price">{formatPrice(product.originalPrice)}</span>
+                      <span className="discount-percent">Save {product.discount}%</span>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -669,7 +727,6 @@ export default function ProductDetailsPage() {
 
           <div className="product-description">
             <p>{product.description}</p>
-            <p className="detailed-description">{product.detailedDescription}</p>
           </div>
 
           {/* Features */}
@@ -694,7 +751,7 @@ export default function ProductDetailsPage() {
               <div className="specs-grid">
                 {Object.entries(product.specifications).map(([key, value]) => (
                   <div key={key} className="spec-item">
-                    <span className="spec-label">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                    <span className="spec-label">{key.replace(/([A-Z])/g, " $1").replace(/[_-]+/g, " ").trim()}:</span>
                     <span className="spec-value">{value}</span>
                   </div>
                 ))}
@@ -724,6 +781,73 @@ export default function ProductDetailsPage() {
                     {product.artisanInfo.status}
                   </span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {web3Profile && (
+            <div className="product-web3-panel">
+              <div className="product-web3-panel__header">
+                <div className="product-web3-panel__badge">
+                  <Blocks size={20} />
+                </div>
+                <div>
+                  <h3>Web3 Provenance</h3>
+                  <p>
+                    This listing is framed for NFT minting, royalty routing, escrow protection, and
+                    future auction or offer execution.
+                  </p>
+                </div>
+              </div>
+
+              <div className="product-web3-grid">
+                <div className="product-web3-metric">
+                  <span>Token standard</span>
+                  <strong>{web3Profile.tokenStandard}</strong>
+                </div>
+                <div className="product-web3-metric">
+                  <span>Creator royalty</span>
+                  <strong>{web3Profile.royaltyPercent}%</strong>
+                </div>
+                <div className="product-web3-metric">
+                  <span>Settlement rail</span>
+                  <strong>{web3Profile.settlementRail}</strong>
+                </div>
+                <div className="product-web3-metric">
+                  <span>Listing mode</span>
+                  <strong>{web3Profile.editionLabel}</strong>
+                </div>
+              </div>
+
+              <div className="product-web3-chip-row">
+                {productContracts.map((contract) => (
+                  <span key={contract.key} className={`product-web3-chip priority-${contract.priority.toLowerCase()}`}>
+                    {contract.name} {contract.priority}
+                  </span>
+                ))}
+              </div>
+
+              <div className="product-web3-footer">
+                <div className="product-web3-footer__copy">
+                  <Wallet size={18} />
+                  <span>
+                    {isWalletConnected
+                      ? `Wallet linked on ${chainConfig.name}.`
+                      : "Connect a wallet to inspect explorer activity from inside the marketplace."}
+                  </span>
+                </div>
+
+                {isWalletConnected ? (
+                  <a href={walletExplorerUrl || "#"} target="_blank" rel="noreferrer">
+                    <span>Open wallet explorer</span>
+                    <ExternalLink size={16} />
+                  </a>
+                ) : (
+                  <Link to="/web3">
+                    <span>Connect wallet</span>
+                    <ExternalLink size={16} />
+                  </Link>
+                )}
               </div>
             </div>
           )}
@@ -774,21 +898,45 @@ export default function ProductDetailsPage() {
             </div>
 
             <div className="price-summary">
-              <div className="price-row">
-                <span>Price ({quantity} items):</span>
-                <span className="item-price">₹{product.price * quantity}</span>
-              </div>
-              {product.originalPrice && (
-                <div className="price-row">
-                  <span>You Save:</span>
-                  <span className="savings">₹{(product.originalPrice - product.price) * quantity}</span>
+              {HIDE_PRODUCT_PRICES ? (
+                <div className="price-row total">
+                  <span>Total:</span>
+                  <span className="total-price">Price hidden until commercial launch</span>
                 </div>
+              ) : (
+                <>
+                  <div className="price-row">
+                    <span>Price ({quantity} items):</span>
+                    <span className="item-price">{formatPrice(product.price * quantity)}</span>
+                  </div>
+                  {product.originalPrice && (
+                    <div className="price-row">
+                      <span>You Save:</span>
+                      <span className="savings">{formatPrice((product.originalPrice - product.price) * quantity)}</span>
+                    </div>
+                  )}
+                  <div className="price-row total">
+                    <span>Total:</span>
+                    <span className="total-price">{formatPrice(product.price * quantity)}</span>
+                  </div>
+                </>
               )}
-              <div className="price-row total">
-                <span>Total:</span>
-                <span className="total-price">₹{product.price * quantity}</span>
-              </div>
             </div>
+
+            {web3Profile && (
+              <div className="purchase-web3-callout">
+                <div className="purchase-web3-callout__icon">
+                  <Wallet size={18} />
+                </div>
+                <div>
+                  <strong>Web3-ready purchase path</strong>
+                  <span>
+                    {web3Profile.settlementRail} with {web3Profile.royaltyPercent}% creator royalty
+                    and upgrade paths for offers and auctions.
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="action-buttons">
               <button
@@ -855,105 +1003,13 @@ export default function ProductDetailsPage() {
                 <div className="recently-viewed-card__body">
                   <span className="recently-viewed-card__category">{item.category}</span>
                   <h3>{item.name}</h3>
-                  <strong>{new Intl.NumberFormat("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    maximumFractionDigits: 0
-                  }).format(Number(item.price || 0))}</strong>
+                  <strong>{HIDE_PRODUCT_PRICES ? "Price hidden" : formatPrice(item.price)}</strong>
                 </div>
               </Link>
             ))}
           </div>
         </div>
       )}
-
-      {/* Reviews Section */}
-      <div className="reviews-section">
-        <div className="reviews-header">
-          <h2>Customer Reviews</h2>
-          <div className="overall-rating">
-            <span className="rating-number">{product.rating}</span>
-            <div className="rating-breakdown">
-              <div className="rating-stars">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={20}
-                    className={i < Math.floor(product.rating) ? 'filled' : 'empty'}
-                    fill={i < Math.floor(product.rating) ? "#fbbf24" : "#e5e7eb"}
-                  />
-                ))}
-              </div>
-              <span className="rating-count">Based on {product.reviewCount} reviews</span>
-            </div>
-            <button className="write-review-btn">Write a Review</button>
-          </div>
-        </div>
-
-        <div className="reviews-carousel">
-          <button
-            className="review-nav-btn prev"
-            onClick={prevReviews}
-            disabled={reviewIndex === 0}
-            aria-label="Previous reviews"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <div className="reviews-viewport">
-            <div
-              className="reviews-track"
-              style={{
-                transform: `translateX(-${(reviewIndex * 100) / reviewsPerView}%)`
-              }}
-            >
-              {reviews.map((review) => (
-                <div key={review.id} className="review-card">
-                  <div className="review-header">
-                    <div className="reviewer-info">
-                      <div className="reviewer-avatar">
-                        {review.user.charAt(0)}
-                      </div>
-                      <div>
-                        <h4>{review.user}</h4>
-                        <div className="review-meta">
-                          <div className="review-rating">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={14}
-                                className={i < review.rating ? 'filled' : 'empty'}
-                                fill={i < review.rating ? "#fbbf24" : "#e5e7eb"}
-                              />
-                            ))}
-                          </div>
-                          <span className="review-date">{review.date}</span>
-                          {review.verified && (
-                            <span className="verified-badge">
-                              <Check size={12} />
-                              Verified Purchase
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="review-comment">{review.comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            className="review-nav-btn next"
-            onClick={nextReviews}
-            disabled={reviewIndex >= reviewsMaxIndex}
-            aria-label="Next reviews"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-      </div>
 
       {/* Related Products */}
       <div className="related-products-section">
@@ -997,7 +1053,9 @@ export default function ProductDetailsPage() {
                     <Star size={14} fill="#fbbf24" />
                     <span>{related.rating}</span>
                   </div>
-                  <div className="related-product-price">₹{related.price}</div>
+                  <div className="related-product-price">
+                    {HIDE_PRODUCT_PRICES ? "Price hidden" : formatPrice(related.price)}
+                  </div>
                 </div>
               </Link>
               <button

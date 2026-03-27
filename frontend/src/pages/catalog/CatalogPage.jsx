@@ -25,6 +25,7 @@ import { useWishlist } from "../../app/providers/WishlistProvider";
 import { useAuth } from "../../app/providers/AuthProvider";
 import { listProducts } from "../../services/productsService";
 import { listCategories } from "../../services/catalogService";
+import { HIDE_PRODUCT_PRICES, NON_COMMERCIAL_DISCLAIMER } from "../../config/commerce";
 import "./CatalogPage.css";
 
 // Demo products data
@@ -458,6 +459,7 @@ export default function CatalogPage() {
         <div className="catalog-hero-content">
           <h1>Discover Handcrafted Treasures</h1>
           <p>Explore our curated collection of authentic bamboo and wooden handicrafts</p>
+          <div className="catalog-disclaimer">{NON_COMMERCIAL_DISCLAIMER}</div>
         </div>
         <div className="catalog-hero-pattern">
           <div className="pattern-dot"></div>
@@ -826,9 +828,15 @@ export default function CatalogPage() {
 
                     <div className="product-footer">
                       <div className="product-price">
-                        <span className="current-price">₹{product.price}</span>
-                        {product.originalPrice && (
-                          <span className="original-price">₹{product.originalPrice}</span>
+                        {HIDE_PRODUCT_PRICES ? (
+                          <span className="current-price">Price hidden</span>
+                        ) : (
+                          <>
+                            <span className="current-price">₹{product.price}</span>
+                            {product.originalPrice && (
+                              <span className="original-price">₹{product.originalPrice}</span>
+                            )}
+                          </>
                         )}
                       </div>
                       <div className="product-actions">

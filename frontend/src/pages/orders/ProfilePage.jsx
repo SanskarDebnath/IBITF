@@ -1,13 +1,11 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   User,
   ShoppingBag,
-  Home,
   CreditCard,
   Gift,
   Star,
-  Bell,
   Heart,
   MapPin,
   Shield,
@@ -22,36 +20,131 @@ import {
   Settings,
   HelpCircle
 } from "lucide-react";
+import { useAuth } from "../../app/providers/AuthProvider";
+import { getMyProfile, updateMyProfile } from "../../services/usersService";
 import "./ProfilePage.css";
 
+const memberSinceFormatter = new Intl.DateTimeFormat("en-IN", {
+  month: "long",
+  year: "numeric"
+});
+
+function mapProfile(profile, fallback = {}) {
+  return {
+    firstName: profile?.firstName || fallback.firstName || "",
+    lastName: profile?.lastName || fallback.lastName || "",
+    gender: profile?.gender || fallback.gender || "other",
+    email: profile?.email || fallback.email || "",
+    mobile: profile?.mobile || fallback.mobile || "",
+    avatar: fallback.avatar || "",
+    joinDate: profile?.createdAt
+      ? memberSinceFormatter.format(new Date(profile.createdAt))
+      : fallback.joinDate || "-",
+    orders: fallback.orders || 0,
+    wishlist: fallback.wishlist || 0,
+    addresses: fallback.addresses || 0,
+    verified: profile?.isVerified ?? fallback.verified ?? false
+  };
+}
+
 export default function ProfilePage() {
+  const { user, updateUser, logout } = useAuth();
+  const navigate = useNavigate();
+
   const initial = useMemo(
     () => ({
-      firstName: "Sanskar",
-      lastName: "Debnath",
-      gender: "male",
-      email: "sanskardebnath2023@gmail.com",
-      mobile: "+91 6909072118",
+      firstName: "",
+      lastName: "",
+      gender: "other",
+      email: user?.email || "",
+      mobile: "",
       avatar: "",
-      joinDate: "March 2024",
-      orders: 12,
-      wishlist: 8,
-      addresses: 2,
-      verified: true
+      joinDate: "-",
+      orders: 0,
+      wishlist: 0,
+      addresses: 0,
+      verified: false
     }),
-    []
+    [user?.email]
   );
 
   const [profile, setProfile] = useState(initial);
   const [editPersonal, setEditPersonal] = useState(false);
   const [editEmail, setEditEmail] = useState(false);
   const [editMobile, setEditMobile] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [savingSection, setSavingSection] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleChange = (key) => (e) => setProfile((p) => ({ ...p, [key]: e.target.value }));
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await getMyProfile();
+        setProfile((previous) => mapProfile(response, previous));
+      } catch (err) {
+        setError(err.message || "Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const savePersonal = () => setEditPersonal(false);
-  const saveEmail = () => setEditEmail(false);
-  const saveMobile = () => setEditMobile(false);
+    loadProfile();
+  }, []);
+
+  const handleChange = (key) => (e) => {
+    setProfile((p) => ({ ...p, [key]: e.target.value }));
+    setError("");
+    setMessage("");
+  };
+
+  const persistProfile = async (section) => {
+    setSavingSection(section);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await updateMyProfile({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        gender: profile.gender,
+        email: profile.email,
+        mobile: profile.mobile
+      });
+
+      setProfile((previous) => mapProfile(response, previous));
+      updateUser({
+        name: [response?.firstName, response?.lastName].filter(Boolean).join(" ").trim(),
+        email: response?.email,
+        role: response?.role
+      });
+      setMessage("Profile updated successfully.");
+      return true;
+    } catch (err) {
+      setError(err.message || "Failed to update profile");
+      return false;
+    } finally {
+      setSavingSection("");
+    }
+  };
+
+  const savePersonal = async () => {
+    const ok = await persistProfile("personal");
+    if (ok) setEditPersonal(false);
+  };
+  const saveEmail = async () => {
+    const ok = await persistProfile("email");
+    if (ok) setEditEmail(false);
+  };
+  const saveMobile = async () => {
+    const ok = await persistProfile("mobile");
+    if (ok) setEditMobile(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/auth/login");
+  };
 
   const sidebarSections = [
     {
@@ -95,6 +188,18 @@ export default function ProfilePage() {
     { label: "Saved Addresses", value: profile.addresses, color: "#10b981" },
     { label: "Member Since", value: profile.joinDate, color: "#3b82f6" }
   ];
+
+  if (loading) {
+    return (
+      <div className="profile-container-wrapper">
+        <div className="profile-main-container">
+          <section className="profile-info-card">
+            <p className="profile-card-subtitle">Loading profile...</p>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-container-wrapper">
@@ -173,7 +278,7 @@ export default function ProfilePage() {
           </nav>
 
           {/* Logout Button */}
-          <button className="profile-logout-btn">
+          <button className="profile-logout-btn" onClick={handleLogout} type="button">
             <LogOut size={18} />
             <span>Logout</span>
           </button>
@@ -181,6 +286,17 @@ export default function ProfilePage() {
 
         {/* RIGHT CONTENT */}
         <main className="profile-content-area">
+          {error ? (
+            <section className="profile-info-card">
+              <p className="profile-card-subtitle">{error}</p>
+            </section>
+          ) : null}
+          {message ? (
+            <section className="profile-info-card">
+              <p className="profile-card-subtitle">{message}</p>
+            </section>
+          ) : null}
+
           {/* Personal Information */}
           <section className="profile-info-card">
             <div className="profile-card-header">
@@ -197,9 +313,14 @@ export default function ProfilePage() {
                   Edit
                 </button>
               ) : (
-                <button className="profile-save-btn" type="button" onClick={savePersonal}>
+                <button
+                  className="profile-save-btn"
+                  type="button"
+                  onClick={savePersonal}
+                  disabled={savingSection === "personal"}
+                >
                   <Save size={16} />
-                  Save Changes
+                  {savingSection === "personal" ? "Saving..." : "Save Changes"}
                 </button>
               )}
             </div>
@@ -292,18 +413,23 @@ export default function ProfilePage() {
                     <p className="profile-card-subtitle">Primary email for account notifications</p>
                   </div>
                 </div>
-                {!editEmail ? (
-                  <button className="profile-edit-btn" type="button" onClick={() => setEditEmail(true)}>
-                    <Edit2 size={16} />
-                    Edit
-                  </button>
-                ) : (
-                  <button className="profile-save-btn" type="button" onClick={saveEmail}>
-                    <Save size={16} />
-                    Save
-                  </button>
-                )}
-              </div>
+              {!editEmail ? (
+                <button className="profile-edit-btn" type="button" onClick={() => setEditEmail(true)}>
+                  <Edit2 size={16} />
+                  Edit
+                </button>
+              ) : (
+                <button
+                  className="profile-save-btn"
+                  type="button"
+                  onClick={saveEmail}
+                  disabled={savingSection === "email"}
+                >
+                  <Save size={16} />
+                  {savingSection === "email" ? "Saving..." : "Save"}
+                </button>
+              )}
+            </div>
 
               <div className="profile-form-group">
                 <label className="profile-form-label">
@@ -331,18 +457,23 @@ export default function ProfilePage() {
                     <p className="profile-card-subtitle">Primary contact number</p>
                   </div>
                 </div>
-                {!editMobile ? (
-                  <button className="profile-edit-btn" type="button" onClick={() => setEditMobile(true)}>
-                    <Edit2 size={16} />
-                    Edit
-                  </button>
-                ) : (
-                  <button className="profile-save-btn" type="button" onClick={saveMobile}>
-                    <Save size={16} />
-                    Save
-                  </button>
-                )}
-              </div>
+              {!editMobile ? (
+                <button className="profile-edit-btn" type="button" onClick={() => setEditMobile(true)}>
+                  <Edit2 size={16} />
+                  Edit
+                </button>
+              ) : (
+                <button
+                  className="profile-save-btn"
+                  type="button"
+                  onClick={saveMobile}
+                  disabled={savingSection === "mobile"}
+                >
+                  <Save size={16} />
+                  {savingSection === "mobile" ? "Saving..." : "Save"}
+                </button>
+              )}
+            </div>
 
               <div className="profile-form-group">
                 <label className="profile-form-label">

@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Store
 } from "lucide-react";
+import { HIDE_PRODUCT_PRICES, NON_COMMERCIAL_DISCLAIMER } from "../../config/commerce";
 import { getSellerDashboard } from "../../services/sellerService";
 import "./SellerForms.css";
 
@@ -96,6 +97,7 @@ export default function SellerDashboardPage() {
             Track how many products you added, how many units you sold, and how many orders
             came in from one place.
           </p>
+          <div className="seller-alert seller-alert--notice">{NON_COMMERCIAL_DISCLAIMER}</div>
         </div>
 
         <div className="seller-dashboard-actions">
@@ -190,7 +192,11 @@ export default function SellerDashboardPage() {
               <div className="seller-snapshot-list">
                 <div className="seller-snapshot-item">
                   <span>Total Revenue</span>
-                  <strong>{currencyFormatter.format(summary.totalRevenue)}</strong>
+                  <strong>
+                    {HIDE_PRODUCT_PRICES
+                      ? "Hidden until commercial launch"
+                      : currencyFormatter.format(summary.totalRevenue)}
+                  </strong>
                 </div>
                 <div className="seller-snapshot-item">
                   <span>Total Stock</span>

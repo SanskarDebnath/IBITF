@@ -2,11 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app/providers/AuthProvider";
 import { useCart } from "../../app/providers/CartProvider";
+import { useToast } from "../../app/providers/ToastProvider";
+import { useWeb3 } from "../../app/providers/useWeb3";
+import { getExplorerAddressUrl, shortenAddress } from "../../config/web3";
 import {
   BarChart3,
+  Blocks,
   CirclePlus,
   FolderPlus,
-  Search,
   ShoppingCart,
   User,
   LogOut,
@@ -24,22 +27,39 @@ import {
   Home,
   Info,
   Mail,
-  Leaf
+  Leaf,
+  Wallet,
+  ExternalLink
 } from "lucide-react";
+import { NON_COMMERCIAL_DISCLAIMER } from "../../config/commerce";
 import "./Header.css";
 
 export default function Header() {
   const { isAuthenticated, role, loginAsBuyer, loginAsSeller, logout } = useAuth();
   const { items } = useCart();
+  const { showToast } = useToast();
+  const {
+    account: connectedAccount,
+    chainConfig,
+    chainId,
+    connectMetaMask,
+    connectWalletConnect,
+    disconnectWallet,
+    isConnected: isWalletConnected,
+    status: walletStatus,
+    walletConnectEnabled
+  } = useWeb3();
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showSellerAddMenu, setShowSellerAddMenu] = useState(false);
+  const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const walletDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const isSellerPortal = isAuthenticated && role === "seller" && location.pathname.startsWith("/seller");
+  const explorerAddressUrl = getExplorerAddressUrl(chainId, connectedAccount);
 
   // Calculate total items in cart
   const cartItemCount = items.reduce((total, item) => total + (item.qty || item.quantity || 0), 0);
@@ -50,6 +70,9 @@ export default function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowAccountDropdown(false);
         setShowSellerAddMenu(false);
+      }
+      if (walletDropdownRef.current && !walletDropdownRef.current.contains(event.target)) {
+        setShowWalletDropdown(false);
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) && !event.target.closest('.mobile-menu-toggle')) {
         setShowMobileMenu(false);
@@ -63,17 +86,9 @@ export default function Header() {
   useEffect(() => {
     setShowAccountDropdown(false);
     setShowSellerAddMenu(false);
+    setShowWalletDropdown(false);
     setShowMobileMenu(false);
   }, [location.pathname, location.hash]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-      setShowMobileMenu(false);
-    }
-  };
 
   const handleQuickLogin = (type) => {
     if (type === 'buyer') {
@@ -108,6 +123,7 @@ export default function Header() {
   const navigationItems = [
     { icon: <Home size={18} />, label: "Home", path: "/" },
     { icon: <Package size={18} />, label: "Products", path: "/products" },
+    { icon: <Blocks size={18} />, label: "Web3", path: "/web3" },
     { icon: <Info size={18} />, label: "About", path: "/about" },
     { icon: <Mail size={18} />, label: "Contact", path: "/contact" },
   ];
@@ -151,9 +167,125 @@ export default function Header() {
     logout();
     setShowAccountDropdown(false);
     setShowSellerAddMenu(false);
+    setShowWalletDropdown(false);
     setShowMobileMenu(false);
     navigate("/auth/login");
   };
+
+  const handleWalletAction = async (action, successMessage) => {
+    try {
+      await action();
+      if (successMessage) {
+        showToast(successMessage, "success");
+      }
+    } catch (error) {
+      showToast(error?.message || "Wallet action failed.", "error");
+    } finally {
+      setShowWalletDropdown(false);
+    }
+  };
+
+  const walletMenu = (
+    <div className="wallet-menu" ref={walletDropdownRef}>
+      <button
+        type="button"
+        className={`wallet-trigger${showWalletDropdown ? " open" : ""}${isWalletConnected ? " connected" : ""}`}
+        onClick={() => setShowWalletDropdown((prev) => !prev)}
+        aria-expanded={showWalletDropdown}
+        aria-haspopup="menu"
+      >
+        <span className="wallet-trigger__icon">
+          <Wallet size={18} />
+        </span>
+        <span className="wallet-trigger__copy">
+          <strong>{isWalletConnected ? shortenAddress(connectedAccount, 6, 4) : "Wallet"}</strong>
+          <small>{isWalletConnected ? chainConfig.shortName : "MetaMask / WalletConnect"}</small>
+        </span>
+        <ChevronDown size={16} className={`dropdown-arrow ${showWalletDropdown ? "open" : ""}`} />
+      </button>
+
+      {showWalletDropdown && (
+        <div className="wallet-dropdown" role="menu">
+          <Link
+            to="/web3"
+            className="wallet-dropdown__hub"
+            onClick={() => setShowWalletDropdown(false)}
+          >
+            <span className="wallet-dropdown__hub-icon">
+              <Blocks size={18} />
+            </span>
+            <span className="wallet-dropdown__hub-copy">
+              <strong>Open Web3 Hub</strong>
+              <small>Contracts, activity feed, explorer links</small>
+            </span>
+          </Link>
+
+          {!isWalletConnected ? (
+            <>
+              <button
+                type="button"
+                className="wallet-dropdown__action wallet-dropdown__action--primary"
+                onClick={() =>
+                  handleWalletAction(connectMetaMask, "MetaMask connected.")
+                }
+                disabled={walletStatus === "connecting"}
+              >
+                <Wallet size={18} />
+                <span>{walletStatus === "connecting" ? "Connecting..." : "Connect MetaMask"}</span>
+              </button>
+              <button
+                type="button"
+                className="wallet-dropdown__action"
+                onClick={() =>
+                  handleWalletAction(connectWalletConnect, "WalletConnect session opened.")
+                }
+                disabled={walletStatus === "connecting" || !walletConnectEnabled}
+              >
+                <Blocks size={18} />
+                <span>{walletConnectEnabled ? "WalletConnect" : "WalletConnect needs project ID"}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="wallet-dropdown__summary">
+                <div>
+                  <span>Connected wallet</span>
+                  <strong>{shortenAddress(connectedAccount, 8, 6)}</strong>
+                </div>
+                <div>
+                  <span>Network</span>
+                  <strong>{chainConfig.name}</strong>
+                </div>
+              </div>
+
+              {explorerAddressUrl && (
+                <a
+                  href={explorerAddressUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="wallet-dropdown__explorer"
+                >
+                  <span>View on {chainConfig.explorerName}</span>
+                  <ExternalLink size={16} />
+                </a>
+              )}
+
+              <button
+                type="button"
+                className="wallet-dropdown__action wallet-dropdown__action--danger"
+                onClick={() =>
+                  handleWalletAction(disconnectWallet, "Wallet disconnected.")
+                }
+              >
+                <Wallet size={18} />
+                <span>Disconnect wallet</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   if (isSellerPortal) {
     return (
@@ -181,6 +313,13 @@ export default function Header() {
             </nav>
 
             <div className="seller-portal-actions">
+              <Link to="/" className="seller-portal-home">
+                <Home size={18} />
+                <span>Home</span>
+              </Link>
+
+              {walletMenu}
+
               <div className="seller-portal-add-wrapper" ref={dropdownRef}>
                 <button
                   type="button"
@@ -228,6 +367,7 @@ export default function Header() {
             </div>
           </div>
         </header>
+        <div className="seller-portal-disclaimer">{NON_COMMERCIAL_DISCLAIMER}</div>
 
         <div
           ref={mobileMenuRef}
@@ -250,6 +390,24 @@ export default function Header() {
           </div>
 
           <nav className="mobile-nav seller-mobile-nav">
+            <Link
+              to="/web3"
+              className="mobile-nav-link"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <Blocks size={18} />
+              <span>Web3 Hub</span>
+            </Link>
+
+            <Link
+              to="/"
+              className="mobile-nav-link"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <Home size={18} />
+              <span>Home</span>
+            </Link>
+
             {sellerPortalItems.map((item) => (
               <Link
                 key={item.label}
@@ -283,6 +441,21 @@ export default function Header() {
           </nav>
 
           <div className="mobile-auth-section seller-mobile-actions">
+            <div className="mobile-wallet-panel">
+              <div className="mobile-wallet-panel__header">
+                <Wallet size={18} />
+                <span>{isWalletConnected ? shortenAddress(connectedAccount, 8, 6) : "Wallet access"}</span>
+              </div>
+              <p>{isWalletConnected ? chainConfig.name : "Connect MetaMask or WalletConnect from the Web3 hub."}</p>
+              <Link
+                to="/web3"
+                className="mobile-wallet-panel__link"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Open Web3 Hub
+              </Link>
+            </div>
+
             <button
               onClick={handleLogout}
               className="mobile-logout-button seller-mobile-logout"
@@ -340,40 +513,10 @@ export default function Header() {
             )}
           </nav>
 
-          {/* Search Bar */}
-          <div className="search-container buyer-search-container">
-            <form onSubmit={handleSearch} className="search-form buyer-search-form">
-              <div className="search-input-wrapper buyer-search-input-wrapper">
-                <button
-                  type="submit"
-                  className="buyer-search-submit"
-                  aria-label="Search"
-                >
-                  <Search size={18} className="search-icon" />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Search here"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input buyer-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="clear-search"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            </form>
-             
-          </div>
-
           {/* Right Side Actions */}
           <div className="actions buyer-actions">
+            {walletMenu}
+
             {/* Cart */}
             <Link to="/cart" className="cart-action buyer-cart-action">
               <div className="cart-icon-wrapper">
@@ -528,21 +671,6 @@ export default function Header() {
           </button>
         </div>
 
-        <div className="mobile-menu-search buyer-mobile-menu-search">
-          <form onSubmit={handleSearch} className="mobile-search-form">
-            <div className="mobile-search-input-wrapper">
-              <Search size={20} />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="mobile-search-input"
-              />
-            </div>
-          </form>
-        </div>
-
         <nav className="mobile-nav buyer-mobile-nav">
           {buyerNavigationItems.map((item) => (
             <Link
@@ -583,6 +711,21 @@ export default function Header() {
         </nav>
 
         <div className="mobile-auth-section buyer-mobile-auth-section">
+          <div className="mobile-wallet-panel buyer-mobile-wallet-panel">
+            <div className="mobile-wallet-panel__header">
+              <Wallet size={18} />
+              <span>{isWalletConnected ? shortenAddress(connectedAccount, 8, 6) : "Wallet access"}</span>
+            </div>
+            <p>{isWalletConnected ? `${chainConfig.name} connected` : "Connect MetaMask or WalletConnect from the Web3 hub."}</p>
+            <Link
+              to="/web3"
+              className="mobile-wallet-panel__link"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              Open Web3 Hub
+            </Link>
+          </div>
+
           {!isAuthenticated ? (
             <>
               <div className="mobile-auth-buttons">

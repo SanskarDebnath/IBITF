@@ -54,6 +54,18 @@
     line-height: 1.6;
 }
 
+.catalog-disclaimer {
+    margin-top: 16px;
+    display: inline-block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .catalog-hero-pattern {
     position: absolute;
     top: 0;

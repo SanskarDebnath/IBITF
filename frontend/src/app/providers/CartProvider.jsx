@@ -1,17 +1,36 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "./AuthProvider";
 import * as cartService from "../../services/cartService";
+import { API_BASE_URL } from "../../services/apiClient";
 
 const CartContext = createContext(null);
 
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+
+function resolveCartImage(imagePath) {
+  if (!imagePath) return null;
+  if (
+    imagePath.startsWith("http") ||
+    imagePath.startsWith("data:") ||
+    imagePath.startsWith("blob:")
+  ) {
+    return imagePath;
+  }
+
+  const normalized = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  return `${API_ORIGIN}${normalized}`;
+}
+
 const mapCartItems = (items = []) =>
   items.map((item) => ({
-    id: item.item_id,
-    productId: item.product_id,
-    name: item.title,
-    price: Number(item.price || 0),
-    qty: Number(item.qty || 0),
-    image: item.image || null
+    id: item.item_id || item.id,
+    productId: item.product_id || item.productId || item.product?.id,
+    name: item.title || item.name || item.product?.title || item.product?.name || "Untitled product",
+    price: Number(item.price ?? item.product?.price ?? 0),
+    qty: Number(item.qty ?? item.quantity ?? 0),
+    image: resolveCartImage(item.image || item.product?.image || null),
+    status: item.status || item.product?.status || "",
+    stock: Number(item.stock ?? item.product?.stock ?? 0)
   }));
 
 export function CartProvider({ children }) {

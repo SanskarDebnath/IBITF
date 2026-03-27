@@ -328,6 +328,13 @@
   color: #15803d;
 }
 
+.seller-alert--notice {
+  margin-top: 14px;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
 .seller-products-page {
   max-width: 960px;
   margin: 2.5rem auto;

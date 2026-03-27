@@ -9,6 +9,7 @@ import {
   Plus,
   Search
 } from "lucide-react";
+import { HIDE_PRODUCT_PRICES, NON_COMMERCIAL_DISCLAIMER } from "../../config/commerce";
 import { listSellerProducts } from "../../services/sellerService";
 import "./SellerForms.css";
 
@@ -85,6 +86,7 @@ export default function SellerProductsPage() {
         !normalizedQuery ||
         product.title?.toLowerCase().includes(normalizedQuery) ||
         product.description?.toLowerCase().includes(normalizedQuery) ||
+        product.specifications?.toLowerCase().includes(normalizedQuery) ||
         product.category_name?.toLowerCase().includes(normalizedQuery);
 
       const matchesStatus = statusFilter === "all" || (product.status || "").toLowerCase() === statusFilter;
@@ -117,6 +119,7 @@ export default function SellerProductsPage() {
         <div>
           <h1>Manage Products</h1>
           <p>Search listings, catch low stock, and keep your catalog clean.</p>
+          <div className="seller-alert seller-alert--notice">{NON_COMMERCIAL_DISCLAIMER}</div>
         </div>
         <Link className="seller-primary-btn" to="/seller/products/new">
           <Plus size={18} />
@@ -244,7 +247,11 @@ export default function SellerProductsPage() {
                   <div className="seller-product-card__stats">
                     <div>
                       <span>Price</span>
-                      <strong>{currencyFormatter.format(Number(product.price || 0))}</strong>
+                      <strong>
+                        {HIDE_PRODUCT_PRICES
+                          ? "Hidden"
+                          : currencyFormatter.format(Number(product.price || 0))}
+                      </strong>
                     </div>
                     <div>
                       <span>Stock</span>
